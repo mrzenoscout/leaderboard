@@ -4,10 +4,10 @@
 * [General info](#general-info)
 * [Technologies](#technologies)
 * [Setup](#setup)
+* [Built using](#built-using)
 
 ## General info
 Leaderboard API for games
-Build using Ubuntu 20.04, VS Code 1.17.2
 
 ## Technologies
 Project is created using:
@@ -33,3 +33,6 @@ $ go run cmd/seed/main.go
 ```
 $ docker compose down -v
 ```
+
+## Built using
+Ubuntu 20.04, VS Code 1.17.2
