@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
+	"time"
 
 	"github.com/brianvoe/gofakeit"
 	"github.com/joho/godotenv"
-	"github.com/mrzenoscout/leaderboard/pkg/db"
+	"github.com/mrzenoscout/leaderboard/internal/core/drivers/psql"
+	"github.com/mrzenoscout/leaderboard/internal/player/model"
+	"github.com/mrzenoscout/leaderboard/internal/player/store"
 )
 
 func init() {
@@ -15,14 +19,31 @@ func init() {
 }
 
 func main() {
-	gormDB, err := db.Connect()
+	ctx := context.Background()
+
+	db, err := psql.Connect(ctx)
 	if err != nil {
 		log.Fatalf("connect to db: %s", err)
 	}
 
-	for i := 0; i < 1000; i++ {
-		if _, err := db.StorePlayersScore(gormDB, gofakeit.Name(), gofakeit.Number(0, 1000000)); err != nil {
-			log.Fatalf("store players score: %s", err)
+	for i := 0; i < 10000; i++ {
+		playersScore := model.PlayersScore{
+			Score:     gofakeit.Number(0, 10000000),
+			UpdatedAt: gofakeit.DateRange(time.Now().AddDate(-1, 0, 0), time.Now()),
+		}
+
+		playersScore.Player, err = store.InsertPlayer(ctx, db, &model.Player{Name: gofakeit.Name()})
+		if err != nil {
+			if psql.IsErrorCode(err, "23505") {
+				continue
+			}
+
+			log.Fatalf("insert player: %s", err)
+		}
+
+		_, err := store.UpsertPlayersScore(ctx, db, &playersScore)
+		if err != nil {
+			log.Fatalf("insert players score: %s", err)
 		}
 	}
 }

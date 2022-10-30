@@ -11,7 +11,7 @@ RUN go get -d -v ./...
 
 RUN go install -v ./...
 
-RUN go build -o /build cmd/leaderboard/main.go
+RUN go build -o /build cmd/server/main.go
 
 EXPOSE 8080
 

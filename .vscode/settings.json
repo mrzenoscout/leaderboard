@@ -1,0 +1,13 @@
+{
+    "go.testEnvFile": "${workspaceFolder}/.env",
+    "go.testFlags": [
+        "-tags=integration",
+        "-count=1",
+        "-timeout=1m",
+        "-v"
+    ],
+    "go.buildTags": "integration",
+    "go.buildFlags": [
+        "-tags=integration"
+    ],
+}
