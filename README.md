@@ -31,7 +31,7 @@ $ go run cmd/seed/main.go
     (request query params: name, page, limit, month, year, all-time)
  - POST http://localhost:8080/leaderboard/score
     (request json body: name, score)
-   Use authorization bearer token:
+ - Use authorization bearer token:
    ```
    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
    ```
