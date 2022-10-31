@@ -3,7 +3,7 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
-	"github.com/mrzenoscout/leaderboard/internal/tansport/middlewares"
+	"github.com/mrzenoscout/leaderboard/internal/tansport/http/middlewares"
 )
 
 type BaseHandler struct {
