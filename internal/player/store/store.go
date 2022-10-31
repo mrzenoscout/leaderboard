@@ -13,7 +13,7 @@ import (
 func InsertPlayer(ctx context.Context, db *pgx.Conn, player *model.Player) (*model.Player, error) {
 	if err := db.QueryRow(ctx, `INSERT INTO players (name) VALUES ($1) RETURNING id`, player.Name).
 		Scan(&player.ID); err != nil {
-		return nil, fmt.Errorf("insert player: %w", err)
+		return nil, err
 	}
 
 	return player, nil
@@ -82,7 +82,7 @@ func GetPlayersScoreByPlayerName(ctx context.Context, db *pgx.Conn, playerName s
 			&playersScore.UpdatedAt,
 			&playersScore.Player.Rank,
 		); err != nil {
-		return nil, fmt.Errorf("get players score by player name: %w", err)
+		return nil, err
 	}
 
 	return playersScore, nil
@@ -103,11 +103,14 @@ func GetPlayersScores(ctx context.Context, db *pgx.Conn, opts GetPlayersScoresOp
 		args []interface{}
 	)
 
-	var skipClauses bool
+	var queryPlayer bool
 
 	if opts.ToRank > 0 {
+		queryPlayer = true
+	}
+
+	if queryPlayer {
 		q.WriteString(`SELECT id, score, player_id, name, updated_at, rank FROM (`)
-		skipClauses = true
 	}
 
 	q.WriteString(`SELECT
@@ -137,7 +140,7 @@ LEFT JOIN players p
 		return "$" + strconv.Itoa(len(args))
 	}
 
-	if !skipClauses {
+	if !queryPlayer {
 		if opts.Year > 0 {
 			write("EXTRACT(YEAR FROM updated_at) = " + arg(opts.Year))
 		}
@@ -147,20 +150,20 @@ LEFT JOIN players p
 		}
 	}
 
-	q.WriteString("\tORDER BY score DESC")
+	q.WriteString("\nORDER BY score DESC")
 
-	if opts.ToRank > 0 {
+	if queryPlayer {
 		q.WriteString(`) q WHERE rank BETWEEN ` + arg(opts.FromRank) + ` AND ` + arg(opts.ToRank))
-		skipClauses = true
+		queryPlayer = true
 	}
 
-	if !skipClauses {
+	if !queryPlayer {
 		if opts.Offset > 0 {
 			q.WriteString("\nOFFSET " + arg(opts.Offset))
 		}
 
 		if opts.Limit > 0 {
-			q.WriteString("\nLIMIT " + arg(opts.Offset))
+			q.WriteString("\nLIMIT " + arg(opts.Limit))
 		}
 	}
 

@@ -21,14 +21,20 @@ To run this project:
 3. Clone github repo mrzenoscout/leaderboard
 4. Open terminal & run commands
 ```
-$ cd ../leaderboard && source .env
+$ cd ./leaderboard
 $ docker compose build 
 $ docker compose up -d
 $ go run cmd/seed/main.go
 ```
 5. Test API:
  - GET http://localhost:8080/leaderboard
+    (request query params: name, page, limit, month, year, all-time)
  - POST http://localhost:8080/leaderboard/score
+    (request json body: name, score)
+   Use authorization bearer token:
+   ```
+   eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+   ```
 6. To stop and remove containers, networks, images, and volumes.
 ```
 $ docker compose down -v

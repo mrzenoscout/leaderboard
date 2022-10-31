@@ -28,7 +28,7 @@ func (b *BaseHandler) savePlayerScore(c *gin.Context) {
 	}
 
 	if request.Name == "" {
-		err := errors.New("invalid request body: player name must be provided")
+		err := errors.New("invalid request body: player's name must be provided")
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -63,7 +63,7 @@ func (b *BaseHandler) savePlayerScore(c *gin.Context) {
 
 	playersScore, err := store.GetPlayersScoreByPlayerName(ctx, b.db, player.Name)
 	if err != nil {
-		log.Print(fmt.Errorf("get players score by player name: %w", err))
+		log.Print(fmt.Errorf("get player's score by player name: %w", err))
 		c.Status(http.StatusInternalServerError)
 		return
 	}
@@ -85,6 +85,7 @@ func (b *BaseHandler) listPlayersScores(c *gin.Context) {
 	name := c.Query("name")
 	month, _ := strconv.Atoi(c.Query("month"))
 	year, _ := strconv.Atoi(c.Query("year"))
+	allTime, _ := strconv.ParseBool(c.Query("all-time"))
 
 	// if limit is not set defaults to 10 results per page
 	if limit == 0 {
@@ -96,39 +97,33 @@ func (b *BaseHandler) listPlayersScores(c *gin.Context) {
 		page = 1
 	}
 
-	// if month is provided but year is not set defaults to current year
-	if month != 0 && year == 0 {
+	limit = limit + 1
+
+	if allTime {
+		// if month is provided but year is not set default to current year
+		if month != 0 && year == 0 {
+			year = int(time.Now().Year())
+		}
+
+		if month > 12 {
+			month = 0
+		}
+	} else {
+		month = int(time.Now().Month())
 		year = int(time.Now().Year())
 	}
 
+	offset := (page - 1) * limit
 	playersScores, err := store.GetPlayersScores(ctx, b.db, store.GetPlayersScoresOpts{
-		Offset: (page - 1) * limit,
-		// retrieve additional record to check if page number can be increased
-		Limit: limit + 1,
-		Month: month,
-		Year:  year,
+		Offset: offset,
+		Limit:  limit,
+		Month:  month,
+		Year:   year,
 	})
 	if err != nil {
-		log.Print(fmt.Errorf("get players score: %w", err))
+		log.Print(fmt.Errorf("get players scores: %w", err))
 		c.Status(http.StatusInternalServerError)
 		return
-	}
-
-	// check if requested page number is valid
-	if len(playersScores) == 0 && page > 1 {
-		err = errors.New("requested page doesn't hold any records")
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
-		return
-	} else if len(playersScores) == 0 {
-		c.Status(http.StatusNoContent)
-		return
-	}
-
-	// calculate next page number
-	var nextPage int
-	if len(playersScores) == limit+1 {
-		playersScores = playersScores[:len(playersScores)-1]
-		nextPage = page + 1
 	}
 
 	type Results struct {
@@ -144,8 +139,22 @@ func (b *BaseHandler) listPlayersScores(c *gin.Context) {
 	}
 
 	response := Response{
-		Results:  make([]Results, 0, len(playersScores)-1),
-		NextPage: nextPage,
+		Results: make([]Results, 0, len(playersScores)),
+	}
+
+	// check if requested page number is valid
+	if len(playersScores) == 0 && page > 1 {
+		c.Status(http.StatusNotFound)
+		return
+	} else if len(playersScores) == 0 {
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
+	// calculate next page number
+	if len(playersScores) == limit {
+		playersScores = playersScores[:len(playersScores)-1]
+		response.NextPage = page + 1
 	}
 
 	for _, playersScore := range playersScores {
@@ -157,10 +166,16 @@ func (b *BaseHandler) listPlayersScores(c *gin.Context) {
 	}
 
 	// if name is provided retrieve players around this player
-	if name != "" && nextPage != 0 {
+	if name != "" && response.NextPage != 0 {
 		playersScore, err := store.GetPlayersScoreByPlayerName(ctx, b.db, name)
 		if err != nil {
-			log.Print(fmt.Errorf("get players score by player name: %w", err))
+			if err.Error() == "no rows in result set" {
+				err = fmt.Errorf("player named '%s' not found", name)
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
+			log.Print(fmt.Errorf("get players score by player's name: %w", err))
 			c.Status(http.StatusInternalServerError)
 			return
 		}
@@ -173,12 +188,13 @@ func (b *BaseHandler) listPlayersScores(c *gin.Context) {
 				fromRank = playersScore.Player.Rank - 2
 			}
 
+			toRank := playersScore.Player.Rank + 2
 			ps, err := store.GetPlayersScores(ctx, b.db, store.GetPlayersScoresOpts{
 				FromRank: fromRank,
-				ToRank:   playersScore.Player.Rank + 2,
+				ToRank:   toRank,
 			})
 			if err != nil {
-				log.Print(fmt.Errorf("get players scores: %w", err))
+				log.Print(fmt.Errorf("get scores around player: %w", err))
 				c.Status(http.StatusInternalServerError)
 				return
 			}

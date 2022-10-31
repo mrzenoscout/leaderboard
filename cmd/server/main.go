@@ -1,33 +1,35 @@
 package main
 
 import (
+	"context"
 	"log"
-	"net/http/httptest"
 
 	"github.com/gin-gonic/gin"
-
+	"github.com/joho/godotenv"
 	"github.com/mrzenoscout/leaderboard/internal/core/drivers/psql"
-	"github.com/mrzenoscout/leaderboard/internal/player/store"
 	"github.com/mrzenoscout/leaderboard/internal/tansport/http"
 )
 
-// func init() {
-// 	if err := godotenv.Load(".env"); err != nil {
-// 		log.Fatal("load .env file")
-// 	}
-// }
+func init() {
+	if err := godotenv.Load(".env"); err != nil {
+		log.Fatal("load .env file")
+	}
+}
 
 func main() {
-	w := httptest.NewRecorder()
-	ctx, r := gin.CreateTestContext(w)
+	ctx := context.Background()
+	router := gin.Default()
 
-	http.NewBaseHandler(db)
+	db, err := psql.Connect(ctx)
+	if err != nil {
+		log.Fatalf("connect to db: %s", err)
+	}
 
 	if err := psql.MigratePostgres(ctx, "file://migrations"); err != nil {
 		log.Fatalf("migrate postgres: %s", err)
 	}
 
-	http.NewBaseHandler(conn).LeaderBoardRoutes(router)
+	http.NewBaseHandler(db).LeaderBoardRoutes(router)
 
 	if err := router.Run(":8080"); err != nil {
 		log.Fatalf("router run: %s", err)
