@@ -154,10 +154,7 @@ LEFT JOIN players p
 
 	if queryPlayer {
 		q.WriteString(`) q WHERE rank BETWEEN ` + arg(opts.FromRank) + ` AND ` + arg(opts.ToRank))
-		queryPlayer = true
-	}
-
-	if !queryPlayer {
+	} else {
 		if opts.Offset > 0 {
 			q.WriteString("\nOFFSET " + arg(opts.Offset))
 		}

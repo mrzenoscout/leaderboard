@@ -21,7 +21,7 @@ func Connect(ctx context.Context) (*pgx.Conn, error) {
 	))
 
 	if err != nil {
-		return nil, fmt.Errorf("parse config: %w", err)
+		panic(fmt.Errorf("parse config: %w", err))
 	}
 
 	db, err := pgx.ConnectConfig(ctx, cfg)

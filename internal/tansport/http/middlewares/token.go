@@ -3,7 +3,6 @@ package middlewares
 import (
 	"errors"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -35,8 +34,9 @@ func ExtractToken(c *gin.Context) string {
 
 func TokenValid(c *gin.Context) error {
 	tokenString := ExtractToken(c)
+	placeholderToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
-	if tokenString != os.Getenv("TEST_TOKEN") {
+	if tokenString != placeholderToken {
 		return errors.New("unautharized")
 	}
 

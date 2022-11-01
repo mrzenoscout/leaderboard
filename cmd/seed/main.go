@@ -26,7 +26,7 @@ func main() {
 		log.Fatalf("connect to db: %s", err)
 	}
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 10000; i++ {
 		playersScore := model.PlayersScore{
 			Score:     gofakeit.Number(0, 10000000),
 			UpdatedAt: gofakeit.DateRange(time.Now().AddDate(-1, 0, 0), time.Now()),

@@ -180,7 +180,7 @@ func (b *BaseHandler) listPlayersScores(c *gin.Context) {
 			return
 		}
 
-		// if named player's rank is higher thank last player's in the retrieved list
+		// if named player's rank is higher than last player's in the retrieved list
 		// retrieve around player scores
 		if playersScore.Player.Rank > playersScores[len(playersScores)-1].Player.Rank {
 			var fromRank int
